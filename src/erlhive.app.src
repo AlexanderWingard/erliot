@@ -1,0 +1,15 @@
+{application, erlhive,
+ [
+  {description, ""},
+  {vsn, "1"},
+  {registered, []},
+  {applications, [
+                  kernel,
+                  stdlib,
+                  sasl,
+                  gproc,
+                  cowboy
+                 ]},
+  {mod, { erlhive_app, []}},
+  {env, []}
+ ]}.
