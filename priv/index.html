@@ -29,7 +29,7 @@
   function onOpen(evt)
   {
   writeToScreen("CONNECTED");
-  doSend("WebSocket rocks");
+  doSend(JSON.stringify({"msg": "WebSocket rocks"}));
   }
 
   function onClose(evt)
