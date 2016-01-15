@@ -1,4 +1,4 @@
--module(erlhive_sup).
+-module(erliot_sup).
 
 -behaviour(supervisor).
 

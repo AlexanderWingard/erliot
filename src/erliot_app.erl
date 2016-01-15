@@ -1,4 +1,4 @@
--module(erlhive_app).
+-module(erliot_app).
 
 -behaviour(application).
 
@@ -14,7 +14,7 @@ start(_Type, _Args) ->
 	]),
 	{ok, _} = cowboy:start_http(http, 100, [{port, 8080}],
 		[{env, [{dispatch, Dispatch}]}]),
-	erlhive_sup:start_link().
+	erliot_sup:start_link().
 
 stop(_State) ->
 	ok.

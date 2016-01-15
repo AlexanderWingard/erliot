@@ -1,4 +1,4 @@
-{application, erlhive,
+{application, erliot,
  [
   {description, ""},
   {vsn, "1"},
@@ -11,6 +11,6 @@
                   jiffy,
                   cowboy
                  ]},
-  {mod, { erlhive_app, []}},
+  {mod, { erliot_app, []}},
   {env, []}
  ]}.
