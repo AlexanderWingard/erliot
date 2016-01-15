@@ -5,16 +5,22 @@
 -export([websocket_info/3]).
 
 init(Req, Opts) ->
-	erlang:start_timer(1000, self(), <<"Hello!">>),
-	{cowboy_websocket, Req, Opts}.
+    {cowboy_websocket, Req, Opts}.
 
 websocket_handle({text, Msg}, Req, State) ->
-	{reply, {text, << "That's what she said! ", Msg/binary >>}, Req, State};
+    Result = try
+                 R = jiffy:decode(Msg, [return_maps]),
+                 term_to_binary(R)
+             catch throw:Reason ->
+                     Reason
+             end,
+    {reply, {text, io_lib:format("~w", [Result])}, Req, State};
 websocket_handle(_Data, Req, State) ->
-	{ok, Req, State}.
+    {ok, Req, State}.
 
 websocket_info({timeout, _Ref, Msg}, Req, State) ->
-	erlang:start_timer(1000, self(), <<"How' you doin'?">>),
-	{reply, {text, Msg}, Req, State};
-websocket_info(_Info, Req, State) ->
-	{ok, Req, State}.
+    erlang:start_timer(1000, self(), <<"How' you doin'?">>),
+    {reply, {text, Msg}, Req, State};
+websocket_info(Info, Req, State) ->
+    io:format("Unexpected message: ~p", [Info]),
+    {ok, Req, State}.

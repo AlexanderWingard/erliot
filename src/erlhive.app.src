@@ -8,6 +8,7 @@
                   stdlib,
                   sasl,
                   gproc,
+                  jiffy,
                   cowboy
                  ]},
   {mod, { erlhive_app, []}},
