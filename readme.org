@@ -3,3 +3,5 @@
 Erlang needs to be built with
   export CPPFLAGS=-DEPMD6
 to support IPv6 distribution
+
+echo "g2gDZAAPZXJsaW90X2Fubm91bmNlZAAKdGNwX3NlcmlhbGIAACK4" | base64 -d | socat - UDP-DATAGRAM:255.255.255.255:6000,broadcast
