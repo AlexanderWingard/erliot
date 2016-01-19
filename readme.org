@@ -1,0 +1,5 @@
+
+* Notes
+Erlang needs to be built with
+  export CPPFLAGS=-DEPMD6
+to support IPv6 distribution
