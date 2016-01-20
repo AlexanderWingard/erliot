@@ -5,3 +5,5 @@ Erlang needs to be built with
 to support IPv6 distribution
 
 echo "g2gDZAAPZXJsaW90X2Fubm91bmNlZAAKdGNwX3NlcmlhbGIAACK4" | base64 -d | socat - UDP-DATAGRAM:255.255.255.255:6000,broadcast
+socat FILE:erliot_announce.bin UDP-DATAGRAM:255.255.255.255:6000,broadcast
+(socat TCP-LISTEN:8888,fork TCP:127.0.0.1:6571)&

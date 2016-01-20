@@ -4,7 +4,7 @@
 -export([start_link/0]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
-         terminate/2, code_change/3]).
+         terminate/2, code_change/3, client/2]).
 
 -define(SERVER, ?MODULE).
 
@@ -33,8 +33,15 @@ handle_call(_Request, _From, State) ->
 handle_cast(_Msg, State) ->
     {noreply, State}.
 
-handle_info(#udp{packet = P}, State) ->
-    io:format("~p~n",[binary_to_term(P)]),
+handle_info(#udp{ip = IP, packet = P}, State) ->
+    {erliot_announce, tcp_serial, Port} = binary_to_term(P),
+    case gproc:lookup_pids({n, l, {tcp_serial, IP, Port}}) of
+        [] ->
+            spawn_link(?MODULE, client, [IP, Port]),
+            gproc:await({n, l, {tcp_serial, IP, Port}});
+        _Pid ->
+            ok
+    end,
     {noreply, State};
 handle_info(_Info, State) ->
     {noreply, State}.
@@ -48,3 +55,21 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 %%% Internal functions
 %%%===================================================================
+
+client(IP, Port) ->
+    {ok, Socket} = gen_tcp:connect(IP, Port, [{active, false}, {packet, 0}, binary]),
+    gproc:reg({n, l, {tcp_serial, IP, Port}}),
+    client_loop(Socket).
+
+client_loop(Socket) ->
+    gen_tcp:send(Socket, <<1:16>>),
+    {ok, <<Packet:16>>} = gen_tcp:recv(Socket, 2),
+    io:format("~w~n",[Packet]),
+
+    timer:sleep(1000),
+    receive
+        {tcp_closed, _} ->
+            gen_tcp:close(Socket)
+    after 0 ->
+            client_loop(Socket)
+    end.
