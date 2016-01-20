@@ -57,17 +57,17 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 client(IP, Port) ->
-    {ok, Socket} = gen_tcp:connect(IP, Port, [{active, false}, {packet, 0}, binary]),
+    {ok, Socket} = gen_tcp:connect(IP, Port, [{active, true}, {packet, 2}, binary]),
     gproc:reg({n, l, {tcp_serial, IP, Port}}),
     client_loop(Socket).
 
 client_loop(Socket) ->
-    gen_tcp:send(Socket, <<1:16>>),
-    {ok, <<Packet:16>>} = gen_tcp:recv(Socket, 2),
-    io:format("~w~n",[Packet]),
-
+    gen_tcp:send(Socket, term_to_binary(<<"ping">>)),
     timer:sleep(1000),
     receive
+        {tcp, Sock, Data} ->
+            io:format("~p~n", [binary_to_term(Data)]),
+            client_loop(Socket);
         {tcp_closed, _} ->
             gen_tcp:close(Socket)
     after 0 ->
