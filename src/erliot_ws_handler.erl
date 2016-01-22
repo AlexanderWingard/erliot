@@ -1,4 +1,4 @@
--module(ws_handler).
+-module(erliot_ws_handler).
 
 -export([init/2]).
 -export([websocket_handle/3]).
