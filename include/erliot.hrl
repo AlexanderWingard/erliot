@@ -1,0 +1,2 @@
+-define(erliot_binary, erliot_binary).
+-define(erliot_json, erliot_json).
