@@ -1,6 +1,8 @@
 -module(erliot_registry).
 -behaviour(gen_server).
 
+-include("erliot.hrl").
+
 -export([start_link/0]).
 
 -export([init/1, handle_call/3, handle_cast/2, handle_info/2,
@@ -57,19 +59,22 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 client(IP, Port) ->
+    io:format("Connecting to ~w:~w~n", [IP, Port]),
     {ok, Socket} = gen_tcp:connect(IP, Port, [{active, true}, {packet, 2}, binary]),
     gproc:reg({n, l, {tcp_serial, IP, Port}}),
+    gproc:reg({p, l, ?erliot_binary}),
     client_loop(Socket).
 
 client_loop(Socket) ->
-    gen_tcp:send(Socket, term_to_binary(<<"ping">>)),
-    timer:sleep(1000),
     receive
+        {?erliot_binary, Msg} ->
+            io:format("Sending: ~w~n", [Msg]),
+            gen_tcp:send(Socket, Msg),
+            client_loop(Socket);
         {tcp, Sock, Data} ->
-            io:format("~p~n", [binary_to_term(Data)]),
+            io:format("Received: ~w~n", [Data]),
+            gproc:send({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(binary_to_term(Data),[return_maps])}),
             client_loop(Socket);
         {tcp_closed, _} ->
             gen_tcp:close(Socket)
-    after 0 ->
-            client_loop(Socket)
     end.

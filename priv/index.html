@@ -1,67 +1,142 @@
 <!DOCTYPE html>
+<html>
 <head>
-<meta charset="utf-8" />
-<title>WebSocket Test</title>
-<head>
+<meta name="apple-mobile-web-app-capable" content="yes" />
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+<title>Light Up L3</title>
+<script src="//d3js.org/d3.v3.min.js" charset="utf-8"></script>
+<style>
+body {
+  font: 10px sans-serif;
+  margin: 0;
+  overflow: hidden;
+  -webkit-tap-highlight-color: rgba(0,0,0,0);
+}
+</style>
+</head>
 <body>
-<h2>WebSocket Test</h2>
-<div id="output"></div>
-<script language="javascript" type="text/javascript">
+</body>
+<script>
+var lights = [
+    {pin: 2, state: 0, color: "#E6233E", x: 0, y: 70},
+    {pin: 3, state: 0, color: "#66A60B", x: -90, y: -20},
+    {pin: 9, state: 0, color: "#66A60B", x: 90, y: -20},
+    {pin: 8, state: 0, color: "#E6233E", x: 40, y: -50},
+    {pin: 4, state: 0, color: "#E6233E", x: -40, y: -50},
+    {pin: 6, state: 0, color: "#8C85D2", x: 50, y:30},
+    {pin: 7, state: 0, color: "#8C85D2", x: 0, y:10},
+    {pin: 5, state: 0, color: "#8C85D2", x: -50, y:30}
+];
 
-  var wsUri = "ws://localhost:8080/websocket";
-  var output;
+var clickType = "click";
+if( /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent) ) {
+    clickType = "touchstart";
+}
+document.ontouchmove = function(e) {e.preventDefault()};
 
-  function init()
-  {
-  output = document.getElementById("output");
-  testWebSocket();
-  }
+var svg = d3.select("body")
+    .append("svg")
 
-  function testWebSocket()
-  {
-  websocket = new WebSocket(wsUri);
-  websocket.onopen = function(evt) { onOpen(evt) };
-  websocket.onclose = function(evt) { onClose(evt) };
-  websocket.onmessage = function(evt) { onMessage(evt) };
-  websocket.onerror = function(evt) { onError(evt) };
-  }
+var voro = d3.geom.voronoi()
+    .x(function(d) { return x(d.x)})
+    .y(function(d) { return y(d.y)})
 
-  function onOpen(evt)
-  {
-  writeToScreen("CONNECTED");
-  doSend(JSON.stringify({"msg": "WebSocket rocks"}));
-  }
+var x = d3.scale.linear()
+    .domain([-100, 100])
 
-  function onClose(evt)
-  {
-  writeToScreen("DISCONNECTED");
-  }
+var y = d3.scale.linear()
+    .domain([100, -100])
 
-  function onMessage(evt)
-  {
-  writeToScreen('<span style="color: blue;">RESPONSE: ' + evt.data+'</span>');
-  }
+var dragstate = null;
+function touchStart(d,i) {
+    dragstate = lights[i].state;
+    clicked(i);
+}
+function touchMove(d) {
+    var p = d3.touches(svg.node())[0];
+    var elem = document.elementFromPoint(p[0], p[1]);
+    var idx = elem.getAttribute("idx");
+    if(lights[idx].state == dragstate) {
+        clicked(idx);
+    }
+}
 
-  function onError(evt)
-  {
-  writeToScreen('<span style="color: red;">ERROR:</span> ' + evt.data);
-  }
+function clicked(i) {
+    lights[i].state = lights[i].state ^ 1;
+    ws_send([{'pin' : lights[i].pin, 'state': lights[i].state}]);
+    resize()
+}
+var ws;
+function ws_send(msg) {
+    var json = JSON.stringify(msg);
+    if(ws == null) {
+        ws = new WebSocket("ws://" + location.host + "/websocket");
+        ws.onmessage = function(event) {
+            var updates = JSON.parse(event.data);
+            updates.forEach(function(update) {
+                for(var i = 0; i < lights.length; i++) {
+                    if(lights[i].pin == update.pin) {
+                        lights[i].state = update.state;
+                    }
+                }
+            })
+            resize();
+        }
+        ws.onclose = function(event) {
+            ws = null;
+        }
+        ws.onopen = function(event) {
+            ws.send(json);
+        }
+    } else {
+        ws.send(JSON.stringify(msg));
+    }
+}
 
-  function doSend(message)
-  {
-  writeToScreen("SENT: " + message);
-  websocket.send(message);
-  }
 
-  function writeToScreen(message)
-  {
-  var pre = document.createElement("p");
-  pre.style.wordWrap = "break-word";
-  pre.innerHTML = message;
-  output.appendChild(pre);
-  }
+var resize = function() {
+    height = window.innerHeight;
+    width = window.innerWidth;
 
-  window.addEventListener("load", init, false);
+    x.range([0, width]);
+    y.range([0, height]);
 
+    var paths = svg.selectAll("path")
+        .data(voro(lights))
+
+    var paths_enter = paths
+        .enter()
+        .append("path")
+        .attr("opacity", 0.2)
+        .on(clickType, touchStart)
+        .on("touchmove",  touchMove)
+
+    var paths_update = paths
+        .attr("d", function(d) { return "M" + d.join("L") + "Z"; })
+        .attr("fill", function(d, i) {return lights[i].state ?  lights[i].color : "white"})
+        .attr("idx", function(d, i) {return i})
+
+    var circles = svg.selectAll("circle")
+        .data(lights)
+
+    var circles_enter = circles
+        .enter()
+        .append("circle")
+        .attr("r", 20)
+        .on(clickType, touchStart)
+        .on("touchmove",  touchMove);
+    var circles_update = circles
+        .attr("cx", function(d) { return x(d.x) })
+        .attr("cy", function(d) { return y(d.y)})
+        .attr("fill", function(d) { return d.color });
+
+    svg
+        .attr("width", width)
+        .attr("height", height);
+}
+
+window.addEventListener("resize", resize)
+resize()
 </script>
 </html>
