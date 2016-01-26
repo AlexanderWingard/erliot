@@ -68,8 +68,7 @@ function clicked(i) {
     resize()
 }
 var ws;
-function ws_send(msg) {
-    var json = JSON.stringify(msg);
+function ws_connect() {
     if(ws == null) {
         ws = new WebSocket("ws://" + location.host + "/websocket");
         ws.onmessage = function(event) {
@@ -84,13 +83,24 @@ function ws_send(msg) {
             resize();
         }
         ws.onclose = function(event) {
+            console.log("WS closed");
             ws = null;
         }
+        ws.onerror = function(event) {
+            ws = null;
+        }
+    }
+}
+ws_connect();
+function ws_send(msg) {
+    var json = JSON.stringify(msg);
+    if(ws == null) {
+        ws_connect();
         ws.onopen = function(event) {
             ws.send(json);
         }
     } else {
-        ws.send(JSON.stringify(msg));
+        ws.send(json);
     }
 }
 
