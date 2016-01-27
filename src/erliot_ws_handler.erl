@@ -15,8 +15,8 @@ websocket_handle({text, Msg}, Req, State) ->
              catch throw:Reason ->
                      Reason
              end,
-    gproc:send({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(Result)}),
-    gproc:send({p, l, ?erliot_binary}, {?erliot_binary, term_to_binary(Result)}),
+    gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(Result)}),
+    gproc:bcast({p, l, ?erliot_binary}, {?erliot_binary, term_to_binary(Result)}),
     {ok, Req, State};
 websocket_handle(_Data, Req, State) ->
     {ok, Req, State}.
