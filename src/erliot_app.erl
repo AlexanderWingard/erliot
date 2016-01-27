@@ -12,8 +12,7 @@ start(_Type, _Args) ->
 			{"/websocket", erliot_ws_handler, []}
 		]}
 	]),
-	{ok, _} = cowboy:start_http(http, 100, [{port, 8080}],
-		[{env, [{dispatch, Dispatch}]}]),
+	{ok, _} = cowboy:start_http(http, 100, [{ip, {0,0,0,0,0,0,0,0}},{port, 8080}], [{env, [{dispatch, Dispatch}]}]),
 	erliot_sup:start_link().
 
 stop(_State) ->
