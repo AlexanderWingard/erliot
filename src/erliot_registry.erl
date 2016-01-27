@@ -73,7 +73,7 @@ client_loop(Socket) ->
             client_loop(Socket);
         {tcp, Sock, Data} ->
             io:format("Received: ~w~n", [Data]),
-            gproc:send({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(binary_to_term(Data),[return_maps])}),
+            gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(binary_to_term(Data),[return_maps])}),
             client_loop(Socket);
         {tcp_closed, _} ->
             gen_tcp:close(Socket)
