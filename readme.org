@@ -6,9 +6,11 @@ socat FILE:erliot_announce.bin UDP-DATAGRAM:255.255.255.255:6000,broadcast
 
 
 * Building OTP with IPv6 EPMD
+#+BEGIN_SRC
 git clone git@github.com:erlang/otp.git
 cd otp
 ./otp_build autoconf
 export CPPFLAGS=-DEPMD6
 ./configure
 make
+#+END_SRC
