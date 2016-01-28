@@ -6,13 +6,14 @@
 -export([websocket_info/3]).
 
 init(Req, Opts) ->
-    gproc:reg({p, l, ?erliot_json}),
+    gproc:reg({p, l, ?erliot_bcast}),
     {cowboy_websocket, Req, Opts}.
 
-websocket_handle({text, Msg}, Req, State) ->
+websocket_handle({text, JSON}, Req, State) ->
     try
-        Term = jiffy:decode(Msg, [return_maps]),
-        websocket_handle_term(Term)
+        jiffy:decode(JSON, [return_maps]),
+        Bcast = #?erliot_bcast{from = self(), data = JSON},
+        gproc:bcast({p, l, ?erliot_bcast}, Bcast)
     catch Error ->
             io:format("JSON decode error: ~p~n", [Error])
     end,
@@ -20,20 +21,11 @@ websocket_handle({text, Msg}, Req, State) ->
 websocket_handle(_Data, Req, State) ->
     {ok, Req, State}.
 
-websocket_handle_term(Term) ->
-    gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(Term)}),
-    gproc:bcast({p, l, ?erliot_binary}, {?erliot_binary, term_to_binary(Term)}).
+websocket_info(#erliot_bcast{from = F, data = JSON}, Req, State) when F /= self() ->
+    websocket_handle_info(JSON),
+    {reply, {text, JSON}, Req, State};
+websocket_info(_, Req, State) ->
+    {ok, Req, State}.
 
-websocket_info(Msg, Req, State) ->
-    Reply = websocket_handle_info(Msg),
-    case Reply of
-        {reply, R} ->
-            {reply, R, Req, State};
-        ok ->
-            {ok, Req, State}
-    end.
-
-websocket_handle_info({?erliot_json, Msg}) ->
-    {reply, {text, Msg}};
-websocket_handle_info(_Msg) ->
+websocket_handle_info(_) ->
     ok.
