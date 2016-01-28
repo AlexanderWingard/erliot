@@ -10,20 +10,30 @@ init(Req, Opts) ->
     {cowboy_websocket, Req, Opts}.
 
 websocket_handle({text, Msg}, Req, State) ->
-    Result = try
-                 jiffy:decode(Msg, [return_maps])
-             catch throw:Reason ->
-                     Reason
-             end,
-    gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(Result)}),
-    gproc:bcast({p, l, ?erliot_binary}, {?erliot_binary, term_to_binary(Result)}),
+    try
+        Term = jiffy:decode(Msg, [return_maps]),
+        websocket_handle_term(Term)
+    catch Error ->
+            io:format("JSON decode error: ~p~n", [Error])
+    end,
     {ok, Req, State};
 websocket_handle(_Data, Req, State) ->
     {ok, Req, State}.
 
-websocket_info({?erliot_json, Msg} , Req, State) ->
-    io:format("JSON: ~p~n",[Msg]),
-    {reply, {text, Msg}, Req, State};
-websocket_info(Info, Req, State) ->
-    io:format("Unexpected message: ~p", [Info]),
-    {ok, Req, State}.
+websocket_handle_term(Term) ->
+    gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(Term)}),
+    gproc:bcast({p, l, ?erliot_binary}, {?erliot_binary, term_to_binary(Term)}).
+
+websocket_info(Msg, Req, State) ->
+    Reply = websocket_handle_info(Msg),
+    case Reply of
+        {reply, R} ->
+            {reply, R, Req, State};
+        ok ->
+            {ok, Req, State}
+    end.
+
+websocket_handle_info({?erliot_json, Msg}) ->
+    {reply, {text, Msg}};
+websocket_handle_info(_Msg) ->
+    ok.

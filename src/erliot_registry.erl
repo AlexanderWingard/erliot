@@ -59,7 +59,6 @@ code_change(_OldVsn, State, _Extra) ->
 %%%===================================================================
 
 client(IP, Port) ->
-    io:format("Connecting to ~w:~w~n", [IP, Port]),
     {ok, Socket} = gen_tcp:connect(IP, Port, [{active, true}, {packet, 2}, binary]),
     gproc:reg({n, l, {tcp_serial, IP, Port}}),
     gproc:reg({p, l, ?erliot_binary}),
@@ -67,14 +66,14 @@ client(IP, Port) ->
 
 client_loop(Socket) ->
     receive
-        {?erliot_binary, Msg} ->
-            io:format("Sending: ~w~n", [Msg]),
-            gen_tcp:send(Socket, Msg),
-            client_loop(Socket);
-        {tcp, Sock, Data} ->
-            io:format("Received: ~w~n", [Data]),
-            gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(binary_to_term(Data),[return_maps])}),
-            client_loop(Socket);
-        {tcp_closed, _} ->
-            gen_tcp:close(Socket)
+        Msg -> client_handle(Socket, Msg)
     end.
+
+client_handle(Socket, {?erliot_binary, Msg}) ->
+    gen_tcp:send(Socket, Msg),
+    client_loop(Socket);
+client_handle(Socket, {tcp, Sock, Data}) ->
+    gproc:bcast({p, l, ?erliot_json}, {?erliot_json, jiffy:encode(binary_to_term(Data),[return_maps])}),
+    client_loop(Socket);
+client_handle(Socket, {tcp_closed, _}) ->
+    gen_tcp:close(Socket).
