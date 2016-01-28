@@ -1,2 +1,2 @@
--define(erliot_binary, erliot_binary).
--define(erliot_json, erliot_json).
+-define(erliot_bcast, erliot_bcast).
+-record(erliot_bcast, {from, data}).
