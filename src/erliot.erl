@@ -8,6 +8,9 @@ dbg() ->
     dbg:tpl(erliot_registry, client_handle, []),
     dbg:tpl(erliot_ws_handler, websocket_handle_info, []),
     dbg:tpl(erliot_ws_handler, websocket_handle_term, []),
+    dbg:tpl(erliot_ws_client, websocket_handle_info, []),
+    dbg:tpl(erliot_ws_client, websocket_handle_term, []),
+    dbg:tpl(erliot_ws_client, websocket_terminate, []),
     dbg:p(all, c).
 
 stop_dbg() ->
