@@ -1,0 +1,20 @@
+#!/bin/sh
+
+if [ -f host ];
+then
+    host=`cat host`
+else
+    read -p "Host: " host
+    echo $host > host
+fi
+
+if [ -f master ];
+then
+    master=`cat master`
+else
+    read -p "Master: " master
+    echo $master > master
+fi
+
+
+erl -pa ebin -pa deps/*/ebin -name erliot@$host -setcookie erliot -proto_dist inet6_tcp -eval "erliot:dbg(), application:ensure_all_started(erliot), sync:go(), net_adm:ping('erliot@$master')."

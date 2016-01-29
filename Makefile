@@ -1,7 +1,7 @@
-.PHONY: run
+.PHONY: compile
 
-run: deps
-	./rebar compile && erl -pa .. -pa ebin -pa deps/*/ebin -eval "application:ensure_all_started(erliot), sync:go()."
+compile: deps
+	./rebar compile
 
 deps: rebar rebar.config
 	./rebar get-deps
