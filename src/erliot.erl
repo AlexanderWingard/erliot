@@ -16,3 +16,6 @@ dbg() ->
 stop_dbg() ->
     seq_trace:set_token([]),
     dbg:stop_clear().
+
+gproc() ->
+    gproc:select([{{'$1','$2','$3'},[],['$$']}]).
