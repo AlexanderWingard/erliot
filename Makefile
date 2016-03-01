@@ -1,11 +1,8 @@
-.PHONY: compile
+.PHONY: run
 
-compile: deps
-	./rebar compile
+compile: rebar3
+	./rebar3 shell
 
-deps: rebar rebar.config
-	./rebar get-deps
-
-rebar:
-	curl -OL https://github.com/rebar/rebar/wiki/rebar
-	chmod a+x rebar
+rebar3:
+	curl -O https://s3.amazonaws.com/rebar3/rebar3
+	chmod a+x rebar3

@@ -3,6 +3,8 @@
 .rebar/
 deps/
 ebin/
-rebar
+_build/
+rebar3
+rebar.lock
 host
 master
